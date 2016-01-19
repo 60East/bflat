@@ -1,7 +1,21 @@
 ---
-layout: default
+layout: page
 title: BFlat: Modern Binary Messaging
 ---
+
+ <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Bflat by 60East</title>
+  </head>
+
 
 BFlat combines the simplicity and efficiency of simple, schemaless formats with the ability to manage binary data and preserve the full precision of numeric values.
 
