@@ -1,7 +1,7 @@
-----
+---
 layout: page
 title: BFlat: Modern Binary Messaging
-----
+---
 
 BFlat combines the simplicity and efficiency of simple, schemaless formats with the ability to manage binary data and preserve the full precision of numeric values.
 
