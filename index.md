@@ -16,10 +16,13 @@ title: BFlat: Modern Binary Messaging
     <title>Bflat by 60East</title>
   </head>
 
+![BFlat: at your service](images/BFlat.png)
+
 BFLAT
 =====
 
-> These are the droids you're looking for.
+
+> _These are the droids you're looking for._
 
 
 BFlat combines the simplicity and efficiency of simple, schemaless formats with the ability to manage binary data and preserve the full precision of numeric values.
