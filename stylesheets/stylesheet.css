@@ -1,6 +1,7 @@
 /*******************************************************************************
 Slate Theme for GitHub Pages
 by Jason Costello, @jsncostello
+modified by 60East
 *******************************************************************************/
 
 @import url(normalize.css);
@@ -233,7 +234,8 @@ Full-Width Styles
 }
 
 #header_wrap {
-  background: #212121;
+  background: url('../images/BFlat.png') top center no-repeat ;
+  /* background: #212121; */
 }
 
 #header_wrap .inner {
