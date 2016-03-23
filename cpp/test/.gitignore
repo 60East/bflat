@@ -1,0 +1,5 @@
+*.o
+bflat_tests
+googletest*
+*.zip*
+
