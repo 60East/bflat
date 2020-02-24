@@ -375,14 +375,13 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
   while(PyDict_Next(dict, &pos, &key, &value))
   {
     const char* key_string = NULL;
-    size_t key_length = 0;
+    Py_ssize_t key_length = 0;
     PyObject *new_key = NULL;
 
 #ifdef IS_PY3K
-    if(PyBytes_Check(key))
+    if(PyUnicode_Check(key))
     {
-      key_string = PyBytes_AS_STRING(key);
-      key_length = PyBytes_GET_SIZE(key);
+      key_string = PyUnicode_AsUTF8AndSize(key, &key_length);
     }
 #else
     if(PyString_Check(key))
@@ -396,8 +395,7 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
       new_key = PyObject_Str(key);
       if(!new_key) continue; // skip this pair
 #ifdef IS_PY3K
-      key_string = PyBytes_AS_STRING(new_key);
-      key_length = PyBytes_GET_SIZE(new_key);
+      key_string = PyUnicode_AsUTF8AndSize(new_key, &key_length);
 #else
       key_string = PyString_AS_STRING(new_key);
       key_length = PyString_GET_SIZE(new_key);
@@ -410,10 +408,11 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
       long long_value = PyLong_AS_LONG(value);
       append_smallest_integer(serializer,key_string,key_length,long_value);
     }
-    else if(PyBytes_Check(value))
+    else if(PyUnicode_Check(value))
     {
-      const char *string_value = PyBytes_AS_STRING(value);
-      Py_ssize_t length = PyBytes_GET_SIZE(value);
+      const char *string_value = nullptr;
+      Py_ssize_t length = 0;
+      string_value = PyUnicode_AsUTF8AndSize(value, &length);
       serializer.append_string(key_string, key_length, string_value, length);
     }
 #else
@@ -433,8 +432,9 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
     {
       PyObject* pyUtf8String = PyUnicode_AsUTF8String(value);
 #ifdef IS_PY3K
-      const char *string_value = PyBytes_AS_STRING(pyUtf8String);
-      Py_ssize_t length = PyBytes_GET_SIZE(pyUtf8String);
+      const char *string_value = nullptr;
+      Py_ssize_t length = 0;
+      string_value = PyUnicode_AsUTF8AndSize(value, &length);
 #else
       const char *string_value = PyString_AS_STRING(pyUtf8String);
       Py_ssize_t length = PyString_GET_SIZE(pyUtf8String);
@@ -663,12 +663,16 @@ static PyObject* bflat_native_loads(PyObject* self, PyObject* args)
     //PyObject* pyTagString = PyUnicode_FromStringAndSize(tagString.data(),
     //    tagString.length());
     if(!tagString.length()) continue;
-    std::cout << "Tag string lengh: " << tagString.length() << std::endl;
 #ifdef IS_PY3K
     PyObject* pyTagString = PyUnicode_FromStringAndSize(tagString.data(), tagString.length());
 #else
     PyObject* pyTagString = PyString_FromStringAndSize(tagString.data(), tagString.length());
 #endif
+    if (!pyTagString)
+    {
+      PyErr_SetString(PyExc_ValueError, "Invalid UTF-8 encoding for tag name");
+      return NULL;
+    }
 
     if(!value.isArray())
     {
