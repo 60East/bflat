@@ -21,7 +21,7 @@
 ## WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##
 """Module for working with BFlat-encoded data in python."""
-import _bflat_native
+from bflat import _bflat_native
 
 def dumps(value):
     """Converts a dictionary into a BFlat-encoded data string."""

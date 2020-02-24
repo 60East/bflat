@@ -41,7 +41,7 @@ if sys.platform == "win32":
           print >>sys.stderr, "The Visual Studio environment variables do not appear to be set. Re-run this setup script from a Visual Studio Command Prompt."
           exit(-1)
 else:
-    compiler_args=["-std=c++11"]
+    compiler_args=["-std=c++11", "-ggdb"]
 
 setup(name='bflat-python',
       description='BFlat Python Module',
