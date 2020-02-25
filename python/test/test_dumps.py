@@ -24,19 +24,24 @@ import bflat
 import sys
 import unittest
 
+if sys.version_info[0] < 3:
+    MAX = sys.maxint
+else:
+    MAX = sys.maxsize
+
 
 class TestBflatDumps(unittest.TestCase):
     def setup(self):
         pass
 
     def test_encode_ints(self):
-        data = [0, -1, 1, 127, 128, -127, -128, -32767, -32768, -65535, -65536, sys.maxint, -1 * sys.maxint]
+        data = [0, -1, 1, 127, 128, -127, -128, -32767, -32768, -65535, -65536, MAX, -1 * MAX]
         data = dict([(str(i), data[i]) for i in range(len(data))])
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data
 
     def test_encode_doubles(self):
-        data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, sys.maxint - 0.001, -1.01*sys.maxint]
+        data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, MAX - 0.001, -1.01 * MAX]
         data = dict([(str(i), data[i]) for i in range(len(data))])
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data
@@ -48,36 +53,36 @@ class TestBflatDumps(unittest.TestCase):
         assert bflat.loads(encoded) == data
 
     def test_encode_int_array(self):
-        data = [0, -1, 1, 127, 128, -127, -128, -32767, -32768, -65535, -65536, sys.maxint, -1*sys.maxint]
+        data = [0, -1, 1, 127, 128, -127, -128, -32767, -32768, -65535, -65536, MAX, -1 * MAX]
         data = {"values": data}
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data
 
     def test_encode_double_array(self):
-        data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, sys.maxint - 0.001, -1.01*sys.maxint]
+        data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, MAX - 0.001, -1.01 * MAX]
         data = {"values": data}
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data
 
     def test_encode_string_array(self):
-        data = ["", "\"","zz","zzz","zzzz","\x00\x01\x02dddd","zzz",""]
-        data = {"values":data}
+        data = ["", "\"", "zz", "zzz", "zzzz", "\x00\x01\x02dddd", "zzz", ""]
+        data = {"values": data}
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data
 
     def test_big_strings(self):
-        for i in xrange(16):
-            data = {"t"*(2**i):"d"*(2**i)}
+        for i in range(16):
+            data = {"t" * (2**i): "d" * (2**i)}
             assert bflat.loads(bflat.dumps(data)) == data
 
     def test_unicode(self):
-        data = {"data":[u'xxx',u'',u'12345']}
-        expected = {"data":['xxx','','12345']}
+        data = {"data": [u'xxx', u'', u'12345']}
+        expected = {"data": ['xxx', '', '12345']}
         assert expected == bflat.loads(bflat.dumps(data))
 
     def test_bools(self):
-        data = {"value_1":True,"value_2":False}
-        expected = {"value_1":1, "value_2":0}
+        data = {"value_1": True, "value_2": False}
+        expected = {"value_1": 1, "value_2": 0}
         assert expected == bflat.loads(bflat.dumps(data))
 
 

@@ -23,9 +23,11 @@
 """Module for working with BFlat-encoded data in python."""
 from bflat import _bflat_native
 
+
 def dumps(value):
     """Converts a dictionary into a BFlat-encoded data string."""
     return _bflat_native.dumps(value)
+
 
 def loads(value):
     """Decodes a BFlat-encoded data string, returning a dictionary."""

@@ -24,11 +24,10 @@
 ////////////////////////////////////////////////////////////////////////////
 #define PY_SSIZE_T_CLEAN 1
 #include <Python.h>
-#include <iostream>
 
 // python 3 support
 #if PY_MAJOR_VERSION >= 3
-#define IS_PY3K 1
+#define IS_PY3X 1
 #endif
 
 #include "../../cpp/include/bflat/bflat.hpp"
@@ -41,7 +40,7 @@ struct bflat_python_string_buffer
     : _pyString(NULL), _allocated(0)
   {;}
 
-#ifdef IS_PY3K
+#ifdef IS_PY3X
   inline uint8_t* resize(size_t byteCount, size_t length)
   {
     if(!_pyString)
@@ -74,7 +73,7 @@ struct bflat_python_string_buffer
   size_t allocated(void) const { return _allocated; }
   PyObject* pythonString(size_t finalLength)
   {
-#ifdef IS_PY3K
+#ifdef IS_PY3X
     _PyBytes_Resize(&_pyString,finalLength);
 #else
     _PyString_Resize(&_pyString,finalLength);
@@ -109,7 +108,7 @@ inline void append_smallest_integer(py_bflat_serializer& serializer,
 
 bflat::value_type python_to_bflat_type(PyObject* value, int64_t& int_value)
 {
-#ifdef IS_PY3K
+#ifdef IS_PY3X
   if(PyLong_Check(value))
   {
     int_value = PyNumber_AsSsize_t(value,NULL);
@@ -182,7 +181,7 @@ bflat::value_type python_to_bflat_array_slice(PyObject **array,
   return thisType;
 }
 
-#ifdef IS_PY3K
+#ifdef IS_PY3X
 class string_reference
 {
   public:
@@ -264,7 +263,7 @@ class string_reference
 
 int64_t extractInt(PyObject* value)
 {
-#ifndef IS_PY3K
+#ifndef IS_PY3X
   if(PyInt_Check(value))
     return PyNumber_AsSsize_t(value,NULL);
 #endif
@@ -378,7 +377,7 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
     Py_ssize_t key_length = 0;
     PyObject *new_key = NULL;
 
-#ifdef IS_PY3K
+#ifdef IS_PY3X
     if(PyUnicode_Check(key))
     {
       key_string = PyUnicode_AsUTF8AndSize(key, &key_length);
@@ -394,7 +393,7 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
     {
       new_key = PyObject_Str(key);
       if(!new_key) continue; // skip this pair
-#ifdef IS_PY3K
+#ifdef IS_PY3X
       key_string = PyUnicode_AsUTF8AndSize(new_key, &key_length);
 #else
       key_string = PyString_AS_STRING(new_key);
@@ -402,7 +401,7 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
 #endif
     }
 
-#ifdef IS_PY3K
+#ifdef IS_PY3X
     if(PyLong_Check(value))
     {
       long long_value = PyLong_AS_LONG(value);
@@ -431,7 +430,7 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
     else if(PyUnicode_Check(value))
     {
       PyObject* pyUtf8String = PyUnicode_AsUTF8String(value);
-#ifdef IS_PY3K
+#ifdef IS_PY3X
       const char *string_value = nullptr;
       Py_ssize_t length = 0;
       string_value = PyUnicode_AsUTF8AndSize(value, &length);
@@ -500,7 +499,7 @@ PyObject* toPythonValue(const bflat::bflat_value& value)
     case bflat::datetime_type:
       value.getInt(int_value);
       if(int_value >= LONG_MIN && int_value <= LONG_MAX)
-#ifdef IS_PY3K
+#ifdef IS_PY3X
         return PyLong_FromLong((long)int_value);
 #else
         return PyInt_FromLong((long)int_value);
@@ -511,7 +510,7 @@ PyObject* toPythonValue(const bflat::bflat_value& value)
     case bflat::string_type:
       //return PyUnicode_FromStringAndSize((const char*)value.begin(),value.length());
     case bflat::binary_type:
-#ifdef IS_PY3K
+#ifdef IS_PY3X
       return PyUnicode_FromStringAndSize((const char*)value.begin(),value.length());
 #else
       return PyString_FromStringAndSize((const char*)value.begin(),value.length());
@@ -540,7 +539,7 @@ void fixed_array_insert(PyObject* list, bflat::bflat_value& value)
     {
       if(int_value >= LONG_MIN && int_value <= LONG_MAX)
       {
-#ifdef IS_PY3K        
+#ifdef IS_PY3X        
         pyValue = PyLong_FromLong((long)int_value);
 #else
         pyValue = PyInt_FromLong((long)int_value);
@@ -553,7 +552,7 @@ void fixed_array_insert(PyObject* list, bflat::bflat_value& value)
     }
     else
     {
-#ifdef IS_PY3K        
+#ifdef IS_PY3X        
       pyValue = PyLong_FromLong((long)int_value);
 #else
       pyValue = PyInt_FromLong((long)int_value);
@@ -587,7 +586,7 @@ void leb128_array_insert(PyObject* list,
     if(deserializer.decode_array_leb128(value))
     {
       if(value >= LONG_MIN && value <= LONG_MAX)
-#ifdef IS_PY3K
+#ifdef IS_PY3X
         pyValue = PyLong_FromLong((long)value);
 #else
         pyValue = PyInt_FromLong((long)value);
@@ -609,7 +608,7 @@ void string_array_insert(PyObject* list,
     if(deserializer.decode_array_string(value))
     {
       //pyValue = PyUnicode_FromStringAndSize(value.data(),value.length());
-#ifdef IS_PY3K
+#ifdef IS_PY3X
       pyValue = PyUnicode_FromStringAndSize(value.data(),value.length());
 #else
       pyValue = PyString_FromStringAndSize(value.data(),value.length());
@@ -628,7 +627,7 @@ void binary_array_insert(PyObject* list,
     PyObject *pyValue;
     if(deserializer.decode_array_string(value))
     {
-#ifdef IS_PY3K
+#ifdef IS_PY3X
       pyValue = PyUnicode_FromStringAndSize(value.data(),value.length());
 #else
       pyValue = PyString_FromStringAndSize(value.data(),value.length());
@@ -663,7 +662,7 @@ static PyObject* bflat_native_loads(PyObject* self, PyObject* args)
     //PyObject* pyTagString = PyUnicode_FromStringAndSize(tagString.data(),
     //    tagString.length());
     if(!tagString.length()) continue;
-#ifdef IS_PY3K
+#ifdef IS_PY3X
     PyObject* pyTagString = PyUnicode_FromStringAndSize(tagString.data(), tagString.length());
 #else
     PyObject* pyTagString = PyString_FromStringAndSize(tagString.data(), tagString.length());
@@ -778,7 +777,7 @@ static PyMethodDef bflat_native_methods[] = {
 };
 
 const char* MODULE_NAME = "_bflat_native";
-#ifdef IS_PY3K
+#ifdef IS_PY3X
   // this struct is needed for python 3 initialization
   static struct PyModuleDef ampsbflat_moduledef = 
   {
@@ -794,7 +793,7 @@ const char* MODULE_NAME = "_bflat_native";
   };
 #endif
 
-#if IS_PY3K
+#if IS_PY3X
   PyMODINIT_FUNC PyInit__bflat_native(void)
   {
     return PyModule_Create(&ampsbflat_moduledef);
