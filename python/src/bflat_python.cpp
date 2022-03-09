@@ -111,7 +111,7 @@ bflat::value_type python_to_bflat_type(PyObject* value, int64_t& int_value)
 #ifdef IS_PY3X
   if(PyLong_Check(value))
   {
-    int_value = PyNumber_AsSsize_t(value,NULL);
+    int_value = PyLong_AsUnsignedLongLongMask(value);
     return bflat::int64_type; // we'll narrow later
   }
   else if(PyBytes_Check(value) || PyUnicode_Check(value))
@@ -404,7 +404,7 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
 #ifdef IS_PY3X
     if(PyLong_Check(value))
     {
-      long long_value = PyLong_AS_LONG(value);
+      int64_t long_value = (int64_t)PyLong_AsUnsignedLongLongMask(value);
       append_smallest_integer(serializer,key_string,key_length,long_value);
     }
     else if(PyUnicode_Check(value))
@@ -768,11 +768,18 @@ static PyObject* bflat_native_loads(PyObject* self, PyObject* args)
   return dict;
 }
 
+static PyObject* bflat_native_version(PyObject*, PyObject*)
+{
+  return PyFloat_FromDouble(bflat::version);
+}
+
 static PyMethodDef bflat_native_methods[] = {
   {"dumps", bflat_native_dumps, METH_VARARGS,
    "Convert a python mapping object to a BFlat string."},
   {"loads", bflat_native_loads, METH_VARARGS,
    "Convert a BFlat string to a python dictionary."},
+  {"version", bflat_native_version, METH_VARARGS,
+   "Returns the implementation version."},
   {NULL}
 };
 

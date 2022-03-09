@@ -38,8 +38,9 @@
 
 namespace bflat
 {
-  static const int format_error = -1;
-  static const int tag_error    = -2;
+  static const int    format_error = -1;
+  static const int    tag_error    = -2;
+  static const double version      = 1.01;
 
   /// \brief The allowed value type constants for BFlat value types.
   enum value_type : uint8_t
@@ -262,6 +263,18 @@ namespace bflat
     return (int)(p - p_);
   }
 
+  // Smooth 32-bit compilation
+  //
+  template<typename T>
+  inline typename std::enable_if<!std::is_same<T, uint64_t>::value, int>::type
+  decode_uleb_128(const uint8_t *p_,size_t length_,T& value_)
+  {
+    uint64_t value64_ = value_;
+    int res = decode_uleb_128(p_, length_, value64_);
+    value_= static_cast<T>(value64_);
+    return res;
+  }
+
   inline int decode_sleb_128(const uint8_t *p_,size_t length_,int64_t& value_)
   {
     const uint8_t *p = p_;
@@ -345,7 +358,7 @@ namespace bflat
       if (length_ < tagLength + 1) return format_error;
       tagValue_._p = reinterpret_cast<const char *>(p_ + 1);
       tagValue_._len  = tagLength;
-      return tagLength + 1;
+      return static_cast<int>(tagLength + 1);
     }
 
     if (length_ < 2) return format_error;
@@ -356,7 +369,7 @@ namespace bflat
     if (length_ < 1 + ulebByteCount + tagLength) return format_error;
     tagValue_._p = reinterpret_cast<const char *>(p_ + 1 + ulebByteCount);
     tagValue_._len = tagLength;
-    return 1 + ulebByteCount + tagLength;
+    return static_cast<int>(1 + ulebByteCount + tagLength);
   }
 
   inline int decode_null(const uint8_t *p_,size_t length_)
@@ -373,7 +386,7 @@ namespace bflat
     if (length_ < ulebByteCount + slen) return format_error;
     value_._p = reinterpret_cast<const char *>(p_ + ulebByteCount);
     value_._len = slen;
-    return ulebByteCount + slen;
+    return static_cast<int>(ulebByteCount + slen);
   }
 
   inline int decode_binary(const uint8_t *p_,size_t length_,::bflat::string_value& value_)
@@ -385,7 +398,7 @@ namespace bflat
     if (length_ < ulebByteCount + blen) return format_error;
     value_._p = reinterpret_cast<const char *>(p_ + ulebByteCount);
     value_._len = blen;
-    return ulebByteCount + blen;
+    return static_cast<int>(ulebByteCount + blen);
   }
 
   inline int decode_int8(const uint8_t *p_,size_t length_,int64_t& value_)
@@ -508,12 +521,12 @@ namespace bflat
 
   inline size_t get_max_tag_size(uint64_t tagLength_)
   {
-    return (tagLength_ < 8) ? tagLength_ + 1 : tagLength_ + 1 + get_max_uleb_128_size(tagLength_);
+    return static_cast<size_t>((tagLength_ < 8) ? tagLength_ + 1 : tagLength_ + 1 + get_max_uleb_128_size(tagLength_));
   }
 
   inline size_t get_max_string_size(uint64_t stringLength_)
   {
-    return get_max_uleb_128_size(stringLength_) + stringLength_;
+    return static_cast<size_t>(get_max_uleb_128_size(stringLength_) + stringLength_);
   }
 
   struct basic_output_buffer
@@ -965,7 +978,7 @@ namespace bflat
         }
         p += byteCount * _length;
       }
-      return (p - p_);
+      return static_cast<int>(p - p_);
     }
 
     /// \brief The tag from this tag/value pair.

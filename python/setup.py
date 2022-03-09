@@ -22,26 +22,29 @@
 ## WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##
 import os, glob, sys
-from distutils.core import setup
-from distutils.extension import Extension
+try:
+  from setuptools import setup, Extension
+except:
+  from distutils.core import setup
+  from distutils.extension import Extension
 from distutils.sysconfig import get_config_var
 
 if get_config_var("OPT") is not None:
   os.environ["OPT"] = get_config_var("OPT").replace("-Wstrict-prototypes","")
 
+compiler_args=[]
+
 if sys.platform == "win32":
     if "VS90COMNTOOLS" not in os.environ:
-        if "VS100COMNTOOLS" in os.environ:
-            os.environ["VS90COMNTOOLS"] = os.environ["VS100COMNTOOLS"]
-        elif "VS110COMNTOOLS" in os.environ:
-            os.environ["VS90COMNTOOLS"] = os.environ["VS110COMNTOOLS"]
-        elif "VS120COMNTOOLS" in os.environ:
-            os.environ["VS90COMNTOOLS"] = os.environ["VS120COMNTOOLS"]
+        for key, value in os.environ.items():
+            if key.startswith("VS") and key.endswith("COMNTOOLS"):
+                os.environ["VS90COMNTOOLS"] = value
+                break
         else:
-          print >>sys.stderr, "The Visual Studio environment variables do not appear to be set. Re-run this setup script from a Visual Studio Command Prompt."
-          exit(-1)
+            print >>sys.stderr, "The Visual Studio environment variables do not appear to be set. Re-run this setup script from a Visual Studio Command Prompt."
+            exit(-1)
 else:
-    compiler_args=["-std=c++11"]
+    compiler_args.extend(["-std=c++11"])
 
 setup(name='bflat-python',
       description='BFlat Python Module',
