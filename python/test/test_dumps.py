@@ -35,10 +35,12 @@ class TestBflatDumps(unittest.TestCase):
         pass
 
     def test_encode_ints(self):
-        data = [0, -1, 1, 127, 128, -127, -128, -32767, -32768, -65535, -65536, MAX, -1 * MAX]
-        data = dict([(str(i), data[i]) for i in range(len(data))])
-        encoded = bflat.dumps(data)
-        assert bflat.loads(encoded) == data
+        intarray = [0, -1, 1, 127, 128, -127, -128, -32767, -32768]
+        for x in [[], [-65535, -65536, MAX, -1 * MAX], [-2147483647, -2147483648], [9223372036854775807, -9223372036854775808]]:
+            intarray.extend(x)
+            data = dict([(str(i), intarray[i]) for i in range(len(intarray))])
+            encoded = bflat.dumps(data)
+            assert bflat.loads(encoded) == data
 
     def test_encode_doubles(self):
         data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, MAX - 0.001, -1.01 * MAX]
@@ -53,10 +55,12 @@ class TestBflatDumps(unittest.TestCase):
         assert bflat.loads(encoded) == data
 
     def test_encode_int_array(self):
-        data = [0, -1, 1, 127, 128, -127, -128, -32767, -32768, -65535, -65536, MAX, -1 * MAX]
-        data = {"values": data}
-        encoded = bflat.dumps(data)
-        assert bflat.loads(encoded) == data
+        intarray = [0, -1, 1, 127, 128, -127, -128, -32767, -32768]
+        for x in [[], [-65535, -65536, MAX, -1 * MAX], [-2147483647, -2147483648], [9223372036854775807, -9223372036854775808]]:
+            intarray.extend(x)
+            data = {"values": intarray}
+            encoded = bflat.dumps(data)
+            assert bflat.loads(encoded) == data
 
     def test_encode_double_array(self):
         data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, MAX - 0.001, -1.01 * MAX]

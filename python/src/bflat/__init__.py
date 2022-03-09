@@ -33,3 +33,6 @@ def loads(value):
     """Decodes a BFlat-encoded data string, returning a dictionary."""
     return _bflat_native.loads(value)
 
+def version():
+    """Returns the current version of the native implementation."""
+    return _bflat_native.version()
