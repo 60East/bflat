@@ -40,7 +40,7 @@ namespace bflat
 {
   static const int    format_error = -1;
   static const int    tag_error    = -2;
-  static const double version      = 1.01;
+  static const double version      = 1.02;
 
   /// \brief The allowed value type constants for BFlat value types.
   enum value_type : uint8_t

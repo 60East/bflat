@@ -22,6 +22,7 @@
 ##
 import bflat
 import sys
+import six
 import unittest
 
 if sys.version_info[0] < 3:
@@ -48,10 +49,22 @@ class TestBflatDumps(unittest.TestCase):
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data
 
-    def test_encode_strings(self):
-        data = ["", "\"", "zz", "zzz", "zzzz", "\x00\x01\x02dddd", "zzz", ""]
+    @unittest.skipIf(bflat.BYTES_AS_STRING, "bytes type is not preserved during dump/load.")
+    def test_encode_binaries(self):
+        data = [b"", b"\"", b"zz", b"zzz", b"zzzz", b"\x00\x01\x02dddd", b'aa\u0416aa', b'aa\\u0416aa', b'aa\x04\x16aa', b"zzz", b""]
         data = dict([(str(i), data[i]) for i in range(len(data))])
         encoded = bflat.dumps(data)
+        assert bflat.loads(encoded) == data
+
+    def test_encode_strings(self):
+        data = ["", "\"", "zz", "zzz", "zzzz", "\x00\x01\x02dddd", "aa\u0416aa", u"aa\u0416aa", "zzz", ""]
+        data = dict([(str(i), data[i]) for i in range(len(data))])
+        encoded = bflat.dumps(data)
+        if six.PY2:
+            # Since Py2 'unicode' is not supported as a distinct type, convert it to utf-8 string for assertions.
+            for x in data.keys():
+                if isinstance(data[x], unicode):
+                    data[x] = data[x].encode('utf-8')
         assert bflat.loads(encoded) == data
 
     def test_encode_int_array(self):
@@ -64,6 +77,13 @@ class TestBflatDumps(unittest.TestCase):
 
     def test_encode_double_array(self):
         data = [0.0, -1.0, 1.0, 127.0, 128.01, -127.001, -128.0001, -32767.1, -32768.1, -65535.01, -65536.001, MAX - 0.001, -1.01 * MAX]
+        data = {"values": data}
+        encoded = bflat.dumps(data)
+        assert bflat.loads(encoded) == data
+
+    @unittest.skipIf(bflat.BYTES_AS_STRING, "bytes type is not preserved during dump/load.")
+    def test_encode_binary_array(self):
+        data = [b"", b"\"", b"zz", b"zzz", b"zzzz", b"\x00\x01\x02dddd", b"zzz", b""]
         data = {"values": data}
         encoded = bflat.dumps(data)
         assert bflat.loads(encoded) == data

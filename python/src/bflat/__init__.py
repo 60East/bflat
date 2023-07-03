@@ -36,3 +36,5 @@ def loads(value):
 def version():
     """Returns the current version of the native implementation."""
     return _bflat_native.version()
+
+BYTES_AS_STRING = _bflat_native.BYTES_AS_STRING

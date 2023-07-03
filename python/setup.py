@@ -33,6 +33,10 @@ if get_config_var("OPT") is not None:
   os.environ["OPT"] = get_config_var("OPT").replace("-Wstrict-prototypes","")
 
 compiler_args=[]
+macros_list=[]
+
+# uncomment for 1.01-compatible behavior.
+# macros_list.append(("BYTES_AS_STRING", "1"))
 
 if sys.platform == "win32":
     if "VS90COMNTOOLS" not in os.environ:
@@ -55,7 +59,7 @@ setup(name='bflat-python',
       packages=['bflat'],
       package_dir= {'' : 'src'},
       ext_modules=[Extension('bflat._bflat_native',
-          ['src/bflat_python.cpp'], extra_compile_args=compiler_args)]
+          ['src/bflat_python.cpp'], extra_compile_args=compiler_args, define_macros=macros_list)]
       )
 
 
