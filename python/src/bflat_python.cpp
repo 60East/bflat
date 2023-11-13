@@ -114,6 +114,12 @@ bflat::value_type python_to_bflat_type(PyObject* value, int64_t& int_value)
     int_value = PyLong_AsUnsignedLongLongMask(value);
     return bflat::int64_type; // we'll narrow later
   }
+#  if !defined(BYTES_AS_STRING) || BYTES_AS_STRING == 0
+  else if(PyBytes_Check(value))
+  {
+    return bflat::binary_type;
+  }
+#  endif
   else if(PyBytes_Check(value) || PyUnicode_Check(value))
   {
     return bflat::string_type;
@@ -333,6 +339,15 @@ bool append_array(py_bflat_serializer& serializer,
         for(size_t subindex=0;subindex<slice_length;++subindex)
           serializer.append_double(extractDouble(array[index+subindex]));
         break;
+#if !defined(BYTES_AS_STRING) || BYTES_AS_STRING == 0
+      case bflat::binary_type:
+        for(size_t subindex=0;subindex<slice_length;++subindex)
+        {
+          string_reference string_value(array[index+subindex]);
+          serializer.append_binary(string_value.data(),string_value.length());
+        }
+        break;
+#endif
       case bflat::string_type:
         for(size_t subindex=0;subindex<slice_length;++subindex)
         {
@@ -414,6 +429,15 @@ static PyObject* bflat_native_dumps(PyObject *self, PyObject* args)
       string_value = PyUnicode_AsUTF8AndSize(value, &length);
       serializer.append_string(key_string, key_length, string_value, length);
     }
+#  if !defined(BYTES_AS_STRING) || BYTES_AS_STRING == 0
+    else if(PyBytes_Check(value))
+    {
+      char *binary_value = nullptr;
+      Py_ssize_t length = 0;
+      PyBytes_AsStringAndSize(value, &binary_value, &length);
+      serializer.append_binary(key_string, key_length, binary_value, length);
+    }
+#  endif
 #else
     if(PyInt_Check(value))
     {
@@ -509,11 +533,21 @@ PyObject* toPythonValue(const bflat::bflat_value& value)
         return PyLong_FromLongLong(int_value);
     case bflat::string_type:
       //return PyUnicode_FromStringAndSize((const char*)value.begin(),value.length());
+#if defined(BYTES_AS_STRING) && BYTES_AS_STRING != 0
     case bflat::binary_type:
+#endif
 #ifdef IS_PY3X
       return PyUnicode_FromStringAndSize((const char*)value.begin(),value.length());
 #else
       return PyString_FromStringAndSize((const char*)value.begin(),value.length());
+#endif
+#if !defined(BYTES_AS_STRING) || BYTES_AS_STRING == 0
+    case bflat::binary_type:
+#  ifdef IS_PY3X
+      return PyBytes_FromStringAndSize((const char*)value.begin(),value.length());
+#  else
+      return PyString_FromStringAndSize((const char*)value.begin(),value.length());
+#  endif
 #endif
     case bflat::double_type:
       value.getDouble(double_value);
@@ -628,7 +662,11 @@ void binary_array_insert(PyObject* list,
     if(deserializer.decode_array_string(value))
     {
 #ifdef IS_PY3X
+#  if !defined(BYTES_AS_STRING) || BYTES_AS_STRING == 0
+      pyValue = PyBytes_FromStringAndSize(value.data(),value.length());
+#  else
       pyValue = PyUnicode_FromStringAndSize(value.data(),value.length());
+#  endif
 #else
       pyValue = PyString_FromStringAndSize(value.data(),value.length());
 #endif
@@ -773,6 +811,23 @@ static PyObject* bflat_native_version(PyObject*, PyObject*)
   return PyFloat_FromDouble(bflat::version);
 }
 
+static bool bflat_add_constants(PyObject* self)
+{
+  if(PyModule_AddIntConstant(self,
+                             "BYTES_AS_STRING",
+#if defined(BYTES_AS_STRING)
+                             BYTES_AS_STRING
+#else
+                             0
+#endif
+                             ) != 0)
+  {
+    return false;
+  }
+
+  return true;
+}
+
 static PyMethodDef bflat_native_methods[] = {
   {"dumps", bflat_native_dumps, METH_VARARGS,
    "Convert a python mapping object to a BFlat string."},
@@ -803,14 +858,23 @@ const char* MODULE_NAME = "_bflat_native";
 #if IS_PY3X
   PyMODINIT_FUNC PyInit__bflat_native(void)
   {
-    return PyModule_Create(&ampsbflat_moduledef);
+    PyObject* self = PyModule_Create(&ampsbflat_moduledef);
+
+    if(!bflat_add_constants(self))
+    {
+      Py_XDECREF(self);
+      self = NULL;
+    }
+
+    return self;
   }
 #else
   PyMODINIT_FUNC init_bflat_native(void)
   {
-    Py_InitModule3(MODULE_NAME,
-                   bflat_native_methods,
-                   "Internal methods for BFlat Python module.");
+    PyObject* self = Py_InitModule3(MODULE_NAME,
+                                    bflat_native_methods,
+                                    "Internal methods for BFlat Python module.");
+    bflat_add_constants(self);
   }
 #endif
 
